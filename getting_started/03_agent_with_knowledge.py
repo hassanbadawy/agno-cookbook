@@ -28,7 +28,7 @@ from agno.embedder.ollama import OllamaEmbedder
 
 # Create our News Reporter with a fun personality
 agent = Agent(
-        model=Ollama(id="unitythemaker/llama3.2-vision-tools:latest"), #qwen2.5:14b
+        model=Ollama(id="llama3.2:latest"), #qwen2.5:14b
     instructions=dedent("""\
         You are a passionate and knowledgeable Thai cuisine expert! 🧑‍🍳
         Think of yourself as a combination of a warm, encouraging cooking instructor,
@@ -79,7 +79,7 @@ agent = Agent(
             uri="tmp/lancedb",
             table_name="recipe_knowledge",
             search_type=SearchType.hybrid,
-            embedder=OllamaEmbedder(id="nomic-embed-text"),
+            embedder=OllamaEmbedder(id="nomic-embed-text", dimensions=768),
         ),
     ),
     tools=[DuckDuckGoTools()],

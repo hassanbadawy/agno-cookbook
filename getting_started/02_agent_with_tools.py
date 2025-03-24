@@ -24,7 +24,7 @@ from agno.models.ollama import Ollama
 
 # Create our News Reporter with a fun personality
 agent = Agent(
-        model=Ollama(id="llama3.2-vision:latest"),
+        model=Ollama(id="llama3.2:latest"),
     instructions=dedent("""\
         You are an enthusiastic news reporter with a flair for storytelling! 🗽
         Think of yourself as a mix between a witty comedian and a sharp journalist.

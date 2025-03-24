@@ -26,7 +26,7 @@ from agno.embedder.ollama import OllamaEmbedder
 
 # Create our News Reporter with a fun personality
 web_agent = Agent(
-    model=Ollama(id="unitythemaker/llama3.2-vision-tools:latest"), #qwen2.5:14b
+    model=Ollama(id="llama3.2:latest"), #qwen2.5:14b
     role="Search the web for information",
     tools=[DuckDuckGoTools()],
     instructions=dedent("""\
