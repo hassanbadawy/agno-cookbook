@@ -34,10 +34,10 @@ from typing import Optional
 
 # Importing the Agent and model classes
 from agno.agent import Agent
-from agno.models.anthropic import Claude
+# from agno.models.anthropic import Claude
 from agno.models.google import Gemini
-from agno.models.groq import Groq
-from agno.models.openai import OpenAIChat
+# from agno.models.groq import Groq
+# from agno.models.openai import OpenAIChat
 
 from agno.models.ollama import Ollama
 from agno.embedder.ollama import OllamaEmbedder
@@ -117,7 +117,7 @@ def get_sage(
         model = Groq(id=model_name)
     else:
         model=Ollama(id=model_name)
-        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=3072)
+        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768)
 
     # Tools for Sage
     tools = [

@@ -28,7 +28,7 @@ pip install -r cookbook/examples/apps/geobuddy/requirements.txt
 ### 3. Export `GOOGLE_API_KEY`
 
 ```shell
-export GOOGLE_API_KEY=***
+export GOOGLE_API_KEY="AIzaSyD7YtZHaNH1I_o7VlGi2UDylpAe5gwTlh8"
 ```
 
 ### 4. Run Streamlit App

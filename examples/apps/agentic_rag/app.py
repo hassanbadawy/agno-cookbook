@@ -80,7 +80,7 @@ def youtube_parser(video_url: str) -> List[Document]:
             subtitle = transcript.fetch()
             break
         else:
-            subtitle = transcript.translate('ar').fetch()
+            subtitle = transcript.translate('en').fetch()
             break
 
     if subtitle is None:
@@ -108,15 +108,16 @@ def main():
     ####################################################################
     # Model selector
     ####################################################################
+    import ollama
+    models = ollama.list()
+    ollama_models = [model.model for model in models['models']]
+    ollama_models_formatted = [f'ollama||{model}' for model in ollama_models]
     model_options = {
-        "gpt-4o": "openai:gpt-4o",
         "gemini-2.0-flash-exp": "google||gemini-2.0-flash-exp",
-        "claude-3-5-sonnet": "anthropic||claude-3-5-sonnet-20241022",
-        "Ollama: llama3.2-2B": "ollama||llama3.2:latest",
-        "Ollama: llama3.2-vision": "ollama||unitythemaker/llama3.2-vision-tools:latest",
-        "Ollama: deepseek-r1-8B": "ollama||deepseek-r1:8b",
     }
-    
+    for model in ollama_models_formatted:
+        model_options[model.replace('||',':')] = model
+        
     models = list(model_options.keys())
     selected_model = st.sidebar.selectbox(
         "Select a model",

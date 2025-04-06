@@ -30,14 +30,10 @@ View the README for instructions on how to run the application.
 """
 
 from typing import Optional
-
 from agno.agent import Agent, AgentMemory
-from agno.embedder.openai import OpenAIEmbedder
 from agno.knowledge import AgentKnowledge
 from agno.memory.db.postgres import PgMemoryDb
-from agno.models.anthropic import Claude
 from agno.models.google import Gemini
-from agno.models.openai import OpenAIChat
 from agno.models.ollama import Ollama
 from agno.embedder.ollama import OllamaEmbedder
 from agno.storage.agent.postgres import PostgresAgentStorage
@@ -48,7 +44,7 @@ db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
 
 
 def get_agentic_rag_agent(
-    model_id: str = "openai:gpt-4o",
+    model_id: str = "",
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
     debug_mode: bool = True,
@@ -58,18 +54,12 @@ def get_agentic_rag_agent(
     provider, model_name = model_id.split("||")
 
     # Select appropriate model class based on provider
-    if provider == "openai":
-        model = OpenAIChat(id=model_name)
-        embedder=OpenAIEmbedder(id="text-embedding-ada-002", dimensions=1536)
-    elif provider == "google":
+    if provider == "google":
         model = Gemini(id=model_name, api_key="AIzaSyD7YtZHaNH1I_o7VlGi2UDylpAe5gwTlh8")
-        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=3072)
-    elif provider == "anthropic":
-        model = Claude(id=model_name)
-        embedder=OpenAIEmbedder(id="text-embedding-ada-002", dimensions=1536)
+        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768)
     else:
         model=Ollama(id=model_name)
-        embedder=OllamaEmbedder(id="", dimensions=3072)
+        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768) # 3072
         # raise ValueError(f"Unsupported model provider: {provider}")
     # Define persistent memory for chat history
     memory = AgentMemory(

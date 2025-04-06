@@ -22,7 +22,7 @@ from agno.models.ollama import Ollama
 
 # Create a Creative AI Video Director Agent
 video_agent = Agent(
-    model=OpenAIChat(id="gpt-4o"),
+    model=Ollama(id="unitythemaker/llama3.2-vision-tools:latest"),
     tools=[ModelsLabTools()],
     description=dedent("""\
         You are an experienced AI video director with expertise in various video styles,
