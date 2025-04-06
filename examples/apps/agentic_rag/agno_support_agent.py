@@ -32,6 +32,8 @@ from agno.storage.agent.sqlite import SqliteAgentStorage
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.tools.python import PythonTools
 from agno.vectordb.lancedb import LanceDb, SearchType
+from agno.models.ollama import Ollama
+from agno.embedder.ollama import OllamaEmbedder
 from rich import print
 from rich.console import Console
 from rich.table import Table
@@ -51,7 +53,7 @@ def initialize_knowledge_base(load_knowledge: bool = False):
     Args:
         load_knowledge (bool): Whether to load the knowledge base. Defaults to False.
     """
-    model=Ollama(id=model_name)
+    
     embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768) # 3072
     agent_knowledge = UrlKnowledge(
         urls=["https://docs.agno.com/llms-full.txt"],
@@ -59,10 +61,9 @@ def initialize_knowledge_base(load_knowledge: bool = False):
             uri="tmp/lancedb",
             table_name="agno_assist_knowledge",
             search_type=SearchType.hybrid,
-            embedder=OpenAIEmbedder(id="text-embedding-3-small"),
+            embedder=embedder,
         ),
     )
-    
     # Load the knowledge base
     if load_knowledge:
         print("[bold blue]📚 Initializing knowledge base...[/bold blue]")
@@ -91,7 +92,7 @@ def create_agent(
     return Agent(
         name="AgnoAssist",
         session_id=session_id,
-        model=OpenAIChat(id="gpt-4o"),
+        model=Ollama(id="llama3.2:latest"),
         description=dedent("""\
         You are AgnoAssist, an advanced AI Agent specialized in the Agno framework.
         Your goal is to help developers understand and effectively use Agno by providing

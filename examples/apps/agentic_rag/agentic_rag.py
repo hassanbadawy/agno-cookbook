@@ -1,4 +1,5 @@
 """🤖 Agentic RAG Agent - Your AI Knowledge Assistant!
+https://github.com/agno-agi/agno/blob/main/cookbook/agent_concepts/knowledge/doc_kb.py
 
 This advanced example shows how to build a sophisticated RAG (Retrieval Augmented Generation) system that
 leverages vector search and LLMs to provide deep insights from any knowledge base.
