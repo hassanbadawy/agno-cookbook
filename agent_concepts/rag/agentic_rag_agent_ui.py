@@ -5,12 +5,15 @@
 """
 
 from agno.agent import Agent
-from agno.embedder.openai import OpenAIEmbedder
 from agno.knowledge.pdf_url import PDFUrlKnowledgeBase
-from agno.models.openai import OpenAIChat
 from agno.playground import Playground, serve_playground_app
 from agno.storage.agent.postgres import PostgresAgentStorage
 from agno.vectordb.pgvector import PgVector, SearchType
+from agno.models.ollama import Ollama
+from agno.embedder.ollama import OllamaEmbedder
+
+model=Ollama(id="llama3.2:latest")
+embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768) 
 
 db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
 # Create a knowledge base of PDFs from URLs
@@ -21,14 +24,14 @@ knowledge_base = PDFUrlKnowledgeBase(
         table_name="recipes",
         db_url=db_url,
         search_type=SearchType.hybrid,
-        embedder=OpenAIEmbedder(id="text-embedding-3-small"),
+        embedder=embedder,
     ),
 )
 
 rag_agent = Agent(
     name="RAG Agent",
     agent_id="rag-agent",
-    model=OpenAIChat(id="gpt-4o"),
+    model=model,
     knowledge=knowledge_base,
     # Add a tool to search the knowledge base which enables agentic RAG.
     # This is enabled by default when `knowledge` is provided to the Agent.

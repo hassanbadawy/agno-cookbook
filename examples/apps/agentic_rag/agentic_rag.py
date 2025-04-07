@@ -40,6 +40,8 @@ from agno.embedder.ollama import OllamaEmbedder
 from agno.storage.agent.postgres import PostgresAgentStorage
 from agno.tools.duckduckgo import DuckDuckGoTools
 from agno.vectordb.pgvector import PgVector
+from agno.memory.classifier import MemoryClassifier
+from agno.memory.summarizer import MemorySummarizer
 
 db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
 
@@ -57,25 +59,33 @@ def get_agentic_rag_agent(
     # Select appropriate model class based on provider
     if provider == "google":
         model = Gemini(id=model_name, api_key="AIzaSyD7YtZHaNH1I_o7VlGi2UDylpAe5gwTlh8")
-        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768)
+        embedder=OllamaEmbedder(id="command-r7b-arabic:latest")
     else:
         model=Ollama(id=model_name)
-        embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768) # 3072
+        embedder=OllamaEmbedder(id="command-r7b-arabic:latest") #  dimensions=3072
         # raise ValueError(f"Unsupported model provider: {provider}")
     # Define persistent memory for chat history
     memory = AgentMemory(
         db=PgMemoryDb(
             table_name="agent_memory", db_url=db_url
         ),  # Persist memory in Postgres
-        create_user_memories=True,  # Store user preferences
-        create_session_summary=True,  # Store conversation summaries
+                # Create and store personalized memories for this user
+        create_user_memories=False,
+        # Update memories for the user after each run
+        update_user_memories_after_run=False,
+        # Create and store session summaries
+        create_session_summary=True,
+        # Update session summaries after each run
+        update_session_summary_after_run=True,
+        summarizer=MemorySummarizer(model=model),
+        classifier=MemoryClassifier(model=model),
     )
 
     # Define the knowledge base
     knowledge_base = AgentKnowledge(
         vector_db=PgVector(
             db_url=db_url,
-            table_name="agentic_rag_documents",
+            table_name="agentic_rag_documents_v3",
             schema="ai",
             embedder=embedder,
         ),

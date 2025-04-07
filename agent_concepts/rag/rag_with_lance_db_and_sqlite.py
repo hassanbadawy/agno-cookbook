@@ -11,14 +11,14 @@ from agno.vectordb.lancedb import LanceDb
 db_url = "/tmp/lancedb"
 
 # Configure the language model
-model = Ollama(id="llama3.1:8b")
+model = Ollama(id="llama3.2:latest")
 
 # Create Ollama embedder
 embedder = OllamaEmbedder(id="nomic-embed-text", dimensions=768)
 
 # Create the vector database
 vector_db = LanceDb(
-    table_name="recipes",  # Table name in the vector database
+    table_name="recipes3",  # Table name in the vector database
     uri=db_url,  # Location to initiate/create the vector database
     embedder=embedder,  # Without using this, it will use OpenAIChat embeddings by default
 )
@@ -34,7 +34,7 @@ knowledge_base.load(recreate=False)
 # agent.knowledge_base.load(recreate=False) # You can also use this to load a knowledge base after creating agent
 
 # Set up SQL storage for the agent's data
-storage = SqliteAgentStorage(table_name="recipes", db_file="data.db")
+storage = SqliteAgentStorage(table_name="recipes", db_file="tmp/data.db")
 storage.create()  # Create the storage if it doesn't exist
 
 # Initialize the Agent with various configurations including the knowledge base and storage

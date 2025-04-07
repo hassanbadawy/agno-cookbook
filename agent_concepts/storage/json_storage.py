@@ -3,8 +3,13 @@
 from agno.agent import Agent
 from agno.storage.agent.json import JsonAgentStorage
 from agno.tools.duckduckgo import DuckDuckGoTools
+from agno.models.ollama import Ollama
+from agno.embedder.ollama import OllamaEmbedder
 
+model=Ollama(id="llama3.2:latest")
+embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768) 
 agent = Agent(
+    model=model,
     storage=JsonAgentStorage(dir_path="tmp/agent_sessions_json"),
     tools=[DuckDuckGoTools()],
     add_history_to_messages=True,
