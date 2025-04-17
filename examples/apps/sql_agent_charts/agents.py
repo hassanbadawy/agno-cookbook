@@ -37,6 +37,9 @@ from agno.tools.sql import SQLTools
 from agno.vectordb.pgvector import PgVector
 from agno.models.ollama import Ollama
 from agno.embedder.ollama import OllamaEmbedder
+
+import pandas as pd
+import matplotlib.pyplot as plt
 # ************* Database Connection *************
 db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
 # *******************************
@@ -121,6 +124,62 @@ semantic_model = {
 semantic_model_str = json.dumps(semantic_model, indent=2)
 # *******************************
 
+        
+def get_plot_tool(input_data: list, plot_type: str='bar', title: str = None) -> dict:
+    """Create a plot from the input data. the input data should be tow-dimensional key-value pairs, 
+    like: [{"column1": "value1", "column2": "value2"}, ...]
+    and contain the data to plot. The plot type can be bar, line, scatter or pie.
+    The function will return a dictionary containing the plot file path or an error message.
+    The plot will be saved in the output directory with a timestamp to avoid overwriting.
+    The function will also set the title and labels for the plot.
+    
+    Args:
+        input_data: Dictionary containing the data to plot (typically from SQL results)
+        plot_type: Type of plot to create (bar, line, scatter)
+        title: Optional plot title
+        x_label: Optional x-axis label
+        y_label: Optional y-axis label
+        
+    Returns:
+        Dictionary containing the plot file path or an error message
+    """
+    df = pd.DataFrame(input_data)
+
+    try:
+        # Create the plot based on the specified plot type
+        fig, ax = plt.subplots(figsize=(10, 6))
+        if plot_type == "bar":
+            df.plot(kind="bar", ax=ax)
+        elif plot_type == "line":
+            df.plot(kind="line", ax=ax)
+        elif plot_type == "scatter":
+            if len(df.columns) < 2:
+                return {"error": "Scatter plots require at least two columns (x and y)"}
+            x_col = df.columns[0]
+            y_col = df.columns[1]
+            df.plot(kind="scatter", x=x_col, y=y_col, ax=ax)
+        elif plot_type == "pie" and len(df.columns) >= 2:
+            df.plot(kind="pie", y=df.columns[1], labels=df[df.columns[0]], ax=ax)
+        else:
+            return {"error": f"Unsupported plot type: {plot_type}"}
+            
+        # Set the title and labels
+        ax.set_title(title or f"{plot_type.capitalize()} Plot")
+        ax.set_xlabel(x_col)
+        ax.set_ylabel(y_col)
+        
+        # Save the plot with timestamp to avoid overwriting
+        import time
+        timestamp = int(time.time())
+        plot_file_path = output_dir.joinpath(f"plot_{timestamp}.png")
+        plt.savefig(plot_file_path)
+        plt.close(fig)  # Close the figure to free up memory
+        
+        return {"plot_file_path": str(plot_file_path)}
+    except Exception as e:
+        return {"error": f"Plotting failed: {str(e)}"}
+
+
 
 def get_sql_agent(
     user_id: Optional[str] = None,
@@ -159,7 +218,11 @@ def get_sql_agent(
         # Enable the ability to read the tool call history
         read_tool_call_history=True,
         # Add tools to the agent
-        tools=[SQLTools(db_url=db_url), FileTools(base_dir=output_dir)],
+        tools=[
+            SQLTools(db_url=db_url), 
+            FileTools(base_dir=output_dir), 
+            get_plot_tool(input_data=[])
+        ],
         add_history_to_messages=True,
         num_history_responses=3,
         debug_mode=debug_mode,

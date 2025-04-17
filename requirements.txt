@@ -1,0 +1,12 @@
+agno
+duckduckgo-search
+exa-py
+lancedb
+lxml_html_clean
+newspaper4k
+openai
+pypdf
+requests
+sqlalchemy
+tantivy
+yfinance

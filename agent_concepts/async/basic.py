@@ -1,10 +1,10 @@
 import asyncio
 
 from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-
+from agno.models.ollama import Ollama
+model=Ollama(id="llama3.2:latest")
 agent = Agent(
-    model=OpenAIChat(id="gpt-4o"),
+    model=model,
     description="You help people with their health and fitness goals.",
     instructions=["Recipes should be under 5 ingredients"],
     markdown=True,

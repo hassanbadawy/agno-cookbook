@@ -1,10 +1,10 @@
 import asyncio
 
 from agno.agent import Agent, RunResponse
-from agno.models.openai import OpenAIChat
 from agno.tools.duckduckgo import DuckDuckGoTools
 from rich.pretty import pprint
-
+from agno.models.ollama import Ollama
+model=Ollama(id="llama3.2:latest")
 providers = ["openai", "anthropic", "ollama", "cohere", "google"]
 instructions = [
     "Your task is to write a well researched report on AI providers.",
@@ -14,7 +14,7 @@ instructions = [
 
 async def get_agent(delay, provider):
     agent = Agent(
-        model=OpenAIChat(id="gpt-4"),
+        model=model,
         instructions=instructions,
         tools=[DuckDuckGoTools()],
     )

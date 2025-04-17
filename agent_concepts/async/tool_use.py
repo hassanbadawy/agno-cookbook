@@ -1,11 +1,12 @@
 import asyncio
 
 from agno.agent import Agent
-from agno.models.openai import OpenAIChat
 from agno.tools.duckduckgo import DuckDuckGoTools
-
+from agno.models.ollama import Ollama
+model=Ollama(id="llama3.2:latest")
+model2=Ollama(id="gemma3:latest")
 agent = Agent(
-    model=OpenAIChat(id="gpt-4o"),
+    model=model,
     tools=[DuckDuckGoTools()],
     show_tool_calls=True,
     markdown=True,

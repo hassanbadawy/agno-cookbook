@@ -18,6 +18,7 @@ pip install pytube pysrt
 from textwrap import dedent
 
 from agno.agent import Agent
+from agno.models.openai import OpenAIChat
 from agno.tools.youtube import YouTubeTools
 from agno.models.ollama import Ollama
 
@@ -69,10 +70,8 @@ youtube_agent = Agent(
 )
 
 # Example usage with different types of videos
-youtube_url = "https://www.youtube.com/watch?v=c675KAlmo8k"
-youtube_url = "https://www.youtube.com/watch?v=Ko5Lnkt2sTg"
 youtube_agent.print_response(
-    f"Analyze this video in Arabic ar: {youtube_url}",
+    "Analyze this video: https://www.youtube.com/watch?v=Ko5Lnkt2sTg",
     stream=True,
 )
 

@@ -71,7 +71,7 @@ FULL_INSTRUCTIONS = BASE_PROMPT + ANALYSIS_TEMPLATE
 # Initialize the Medical Imaging Expert agent
 agent = Agent(
     name="Medical Imaging Expert",
-    model=Gemini(id="gemini-2.0-flash-exp"),
+    model=Gemini(id="gemini-2.0-flash-exp", api_key="AIzaSyD7YtZHaNH1I_o7VlGi2UDylpAe5gwTlh8"),
     tools=[DuckDuckGoTools()],  # Enable web search for medical literature
     markdown=True,  # Enable markdown formatting for structured output
     instructions=FULL_INSTRUCTIONS,

@@ -10,20 +10,8 @@ st.set_page_config(
     page_icon="🏥",
     layout="wide",
 )
-st.markdown("##### 🏥 built using [Agno](https://github.com/agno-agi/agno)")
-
 
 def main():
-    with st.sidebar:
-        st.info(
-            "This tool provides AI-powered analysis of medical imaging data using "
-            "advanced computer vision and radiological expertise."
-        )
-        st.warning(
-            "⚠DISCLAIMER: This tool is for educational and informational purposes only. "
-            "All analyses should be reviewed by qualified healthcare professionals. "
-            "Do not make medical decisions based solely on this analysis."
-        )
 
     st.title("🏥 Medical Imaging Diagnosis Agent")
     st.write("Upload a medical image for professional analysis")
@@ -55,11 +43,11 @@ def main():
                 st.image(
                     resized_image,
                     caption="Uploaded Medical Image",
-                    use_container_width=True,
+                    use_container_width=False,
                 )
 
                 analyze_button = st.button(
-                    "🔍 Analyze Image", type="primary", use_container_width=True
+                    "🔍 Analyze Image", type="primary", use_container_width=False
                 )
 
                 additional_info = st.text_area(

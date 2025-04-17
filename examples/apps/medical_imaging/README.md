@@ -17,7 +17,7 @@ pip install -r cookbook/examples/apps/medical_imaging/requirements.txt
 ### 3. Export `GOOGLE_API_KEY`
 
 ```shell
-export GOOGLE_API_KEY="AIzaSyD7YtZHaNH1I_o7VlGi2UDylpAe5gwTlh8"
+export GOOGLE_API_KEY=""
 
 ```
 

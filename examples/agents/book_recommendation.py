@@ -17,13 +17,14 @@ Run: `pip install openai exa_py agno` to install the dependencies
 from textwrap import dedent
 
 from agno.agent import Agent
-from agno.models.openai import OpenAIChat
 from agno.tools.exa import ExaTools
+from agno.models.ollama import Ollama
+model=Ollama(id="llama3.2:latest")
 
 book_recommendation_agent = Agent(
     name="Shelfie",
     tools=[ExaTools()],
-    model=OpenAIChat(id="gpt-4o"),
+    model=Ollama(id="llama3.2:latest"),
     description=dedent("""\
         You are Shelfie, a passionate and knowledgeable literary curator with expertise in books worldwide! 📚
 

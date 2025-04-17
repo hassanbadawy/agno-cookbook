@@ -1,0 +1,13 @@
+*.pyc
+*__pycache__*
+tmp/
+*.log
+*.pkl
+*.db
+*.sqlite
+*.csv
+*.json
+*.xlsx
+*.xls
+*.hdf5
+*.sql*
