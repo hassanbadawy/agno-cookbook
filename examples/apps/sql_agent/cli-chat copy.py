@@ -1,48 +1,37 @@
-"""🏎️ SQL Agent - Your AI Data Analyst!
-
-This advanced example shows how to build a sophisticated text-to-SQL system that
-leverages Agentic RAG to provide deep insights into any data.
-
-Example queries to try:
-- "Who are the top 5 drivers with the most race wins?"
-- "Compare Mercedes vs Ferrari performance in constructors championships"
-- "Show me the progression of fastest lap times at Monza"
-- "Which drivers have won championships with multiple teams?"
-- "What tracks have hosted the most races?"
-- "Show me Lewis Hamilton's win percentage by season"
-
-Examples with table joins:
-- "How many races did the championship winners win each year?"
-- "Compare the number of race wins vs championship positions for constructors in 2019"
-- "Show me Lewis Hamilton's race wins and championship positions by year"
-- "Which drivers have both won races and set fastest laps at Monaco?"
-- "Show me Ferrari's race wins and constructor championship positions from 2015-2020"
-
-View the README for instructions on how to run the application.
-"""
-
-import json
-from pathlib import Path
+# from agents import get_sql_agent
 from textwrap import dedent
-from typing import Optional
-
+from typing import List, Optional
+import inquirer
+import typer
+from rich import print
+import json
 from agno.agent import Agent
+from agno.storage.agent.sqlite import SqliteAgentStorage
 from agno.knowledge.combined import CombinedKnowledgeBase
 from agno.knowledge.json import JSONKnowledgeBase
 from agno.knowledge.text import TextKnowledgeBase
-from agno.models.google import Gemini
-from agno.storage.agent.sqlite import SqliteAgentStorage
 from agno.vectordb.lancedb import LanceDb, SearchType
-from agno.tools.file import FileTools
-from agno.tools.sql import SQLTools
-from agno.models.ollama import Ollama
 from agno.embedder.ollama import OllamaEmbedder
-# ************* Database Connection *************
-# db_url = "postgresql+psycopg://ai:ai@localhost:5532/ai"
-db_url = "sqlite:///./agentic.db"  # Use SQLite for simplicity in this example
-# *******************************
+from agno.models.openai import OpenAIChat
 
+
+llama_superpod_base_url= "https://middleware-aramco-ai-llm-development.apps.d02.aramco.com.sa/v1/" #chat/completions
+llama_superpod_model= "llama3-70b-Instruct" # superpods
+
+ollama_physicalSvr_base_url= "http://localhost:11434/v1/" # chat/completions 
+ollama_physicalSvr_embeddings_url= "http://localhost:11434/v1/embeddings" 
+ollama_physicalSvr_model= "qwen3:0.6b"
+ollama_physicalSvr_embedder= "nomic-embed-text:latest"
+
+model_base_url = ollama_physicalSvr_base_url
+model_id = ollama_physicalSvr_model
+embedder_base_url = ollama_physicalSvr_embeddings_url
+embedder_model_id = ollama_physicalSvr_embedder
+# agent = get_sql_agent(model_id=model_id)
+# agent.print_response("Share a 2 sentence horror story")
 # ************* Paths *************
+from pathlib import Path
+
 cwd = Path(__file__).parent
 knowledge_dir = cwd.joinpath("knowledge")
 output_dir = cwd.joinpath("output")
@@ -50,36 +39,6 @@ output_dir = cwd.joinpath("output")
 # Create the output directory if it does not exist
 output_dir.mkdir(parents=True, exist_ok=True)
 # *******************************
-embedder=OllamaEmbedder(id="nomic-embed-text:latest", dimensions=768) #  dimensions=3072
-
-# ************* Storage & Knowledge *************
-agent_storage = SqliteAgentStorage(
-    db_file="tmp/agents.db",
-    # Store agent sessions in the ai.sql_agent_sessions table
-    table_name="sql_agent_sessions",
-)
-agent_knowledge = CombinedKnowledgeBase(
-    sources=[
-        # Reads text files, SQL files, and markdown files
-        TextKnowledgeBase(
-            path=knowledge_dir,
-            formats=[".txt", ".sql", ".md"],
-        ),
-        # Reads JSON files
-        JSONKnowledgeBase(path=knowledge_dir),
-    ],
-    # Store agent knowledge in the ai.sql_agent_knowledge table
-    vector_db=LanceDb(
-        uri="tmp/lancedb",
-        table_name="sql_agent_knowledge",
-        search_type=SearchType.hybrid,
-        embedder=embedder,
-    ),
-    # 5 references are added to the prompt
-    num_documents=5,
-)
-# *******************************
-
 # ************* Semantic Model *************
 # The semantic model helps the agent identify the tables and columns to use
 # This is sent in the system prompt, the agent then uses the `search_knowledge_base` tool to get table metadata, rules and sample queries
@@ -120,48 +79,51 @@ semantic_model = {
 semantic_model_str = json.dumps(semantic_model, indent=2)
 # *******************************
 
-
-def get_sql_agent(
-    user_id: Optional[str] = None,
-    model_id: str = "openai:gpt-4o",
-    session_id: Optional[str] = None,
-    debug_mode: bool = True,
-) -> Agent:
-    """Returns an instance of the SQL Agent.
-
-    Args:
-        user_id: Optional user identifier
-        debug_mode: Enable debug logging
-        model_id: Model identifier in format 'provider:model_name'
+def initialize_knowledge_base():
+    """Initialize the knowledge base with your preferred documentation or knowledge source
+    Here we use Agno docs as an example, but you can replace with any relevant URLs
     """
-    # Parse model provider and name
-    provider, model_name = model_id.split("||")
 
-    # Select appropriate model class based on provider
-    # Select appropriate model class based on provider
-    if provider == "google":
-        model = Gemini(id=model_name, api_key="AIzaSyD7YtZHaNH1I_o7VlGi2UDylpAe5gwTlh8")
-    else:
-        model=Ollama(id=model_name)
+    sources=[
+            # Reads text files, SQL files, and markdown files
+            TextKnowledgeBase(
+                path=knowledge_dir,
+                formats=[".txt", ".sql", ".md"],
+            ),
+            # Reads JSON files
+            JSONKnowledgeBase(path=knowledge_dir),
+        ]
+    agent_knowledge =  CombinedKnowledgeBase(
+        sources = sources,
+        vector_db=LanceDb(
+            uri="tmp/lancedb",
+            table_name="agno_assist_knowledge",
+            search_type=SearchType.hybrid,
+            embedder=OllamaEmbedder(id=embedder_model_id, host=embedder_base_url, dimensions=768),
+
+        ),
+    )
+    # Load the knowledge base (comment out after first run)
+    agent_knowledge.load()
+    return agent_knowledge
+
+def get_agent_storage():
+    """Return agent storage"""
+    db_url = "sqlite:///agentic.db"
+    return SqliteAgentStorage(
+        table_name="agno_assist_sessions", db_file=db_url
+    )
+
+def create_agent(model_id: Optional[str] = None, session_id: Optional[str] = None) -> Agent:
+    """Create and return a configured DeepKnowledge agent."""
+    agent_knowledge = initialize_knowledge_base()
+    agent_storage = get_agent_storage()
+    model=OpenAIChat(id=model_id, base_url=model_base_url, api_key="123")
 
     return Agent(
-        name="SQL Agent",
-        model=model,
-        user_id=user_id,
+        name="DeepKnowledge",
         session_id=session_id,
-        storage=agent_storage,
-        knowledge=agent_knowledge,
-        # Enable Agentic RAG i.e. the ability to search the knowledge base on-demand
-        search_knowledge=True,
-        # Enable the ability to read the chat history
-        read_chat_history=True,
-        # Enable the ability to read the tool call history
-        read_tool_call_history=True,
-        # Add tools to the agent
-        tools=[SQLTools(db_url=db_url), FileTools(base_dir=output_dir)],
-        add_history_to_messages=True,
-        num_history_responses=3,
-        debug_mode=debug_mode,
+        model=model,
         description=dedent("""\
         You are RaceAnalyst-X, an elite Formula 1 Data Scientist specializing in:
 
@@ -227,6 +189,108 @@ def get_sql_agent(
         + dedent("""\
         </semantic_model>\
         """),
-        # Set to True to display tool calls in the response message
-        # show_tool_calls=True,
+        knowledge=agent_knowledge,
+        storage=agent_storage,
+        add_history_to_messages=True,
+        num_history_responses=3,
+        show_tool_calls=True,
+        read_chat_history=True,
+        markdown=True,
     )
+
+
+
+
+
+def get_example_topics() -> List[str]:
+    """Return a list of example topics for the agent."""
+    return [
+        "What are AI agents and how do they work?",
+        "Which tables do you have access to?",
+        "Tell me more about these tables.",
+        "Which driver has the most race wins?",
+        "Which team won the most Constructors Championships?",
+        "Tell me the name of the driver with the longest racing career? Also tell me when they started and when they retired.",
+        "Show me the number of races per year.",
+        "Write a query to identify the drivers that won the most races per year from 2010 onwards and the position of their team that year."
+    ]
+
+def handle_session_selection() -> Optional[str]:
+    """Handle session selection and return the selected session ID."""
+    agent_storage = get_agent_storage()
+
+    new = typer.confirm("Do you want to start a new session?", default=True)
+    if new:
+        return None
+
+    existing_sessions: List[str] = agent_storage.get_all_session_ids()
+    if not existing_sessions:
+        print("No existing sessions found. Starting a new session.")
+        return None
+
+    print("\nExisting sessions:")
+    for i, session in enumerate(existing_sessions, 1):
+        print(f"{i}. {session}")
+
+    session_idx = typer.prompt(
+        "Choose a session number to continue (or press Enter for most recent)",
+        default=1,
+    )
+
+    try:
+        return existing_sessions[int(session_idx) - 1]
+    except (ValueError, IndexError):
+        return existing_sessions[0]
+
+
+def run_interactive_loop(agent):
+    """Run the interactive question-answering loop."""
+    example_topics = get_example_topics()
+
+    while True:
+        choices = [f"{i + 1}. {topic}" for i, topic in enumerate(example_topics)]
+        choices.extend(["Enter custom question...", "Exit"])
+
+        questions = [
+            inquirer.List(
+                "topic",
+                message="Select a topic or ask a different question:",
+                choices=choices,
+            )
+        ]
+        answer = inquirer.prompt(questions)
+
+        if answer["topic"] == "Exit":
+            break
+
+        if answer["topic"] == "Enter custom question...":
+            questions = [inquirer.Text("custom", message="Enter your question:")]
+            custom_answer = inquirer.prompt(questions)
+            topic = custom_answer["custom"]
+        else:
+            topic = example_topics[int(answer["topic"].split(".")[0]) - 1]
+
+        agent.print_response(topic, stream=True)
+
+
+def deep_knowledge_agent():
+    """Main function to run the DeepKnowledge agent."""
+
+    session_id = handle_session_selection()
+    agent = create_agent(session_id)
+    # agent = get_sql_agent(model_id=model_id, session_id=session_id)
+
+    print("\n🤔 Welcome to DeepKnowledge - Your Advanced Research Assistant! 📚")
+    if session_id is None:
+        session_id = agent.session_id
+        if session_id is not None:
+            print(f"[bold green]Started New Session: {session_id}[/bold green]\n")
+        else:
+            print("[bold green]Started New Session[/bold green]\n")
+    else:
+        print(f"[bold blue]Continuing Previous Session: {session_id}[/bold blue]\n")
+
+    run_interactive_loop(agent)
+
+if __name__ == "__main__":
+    typer.run(deep_knowledge_agent)
